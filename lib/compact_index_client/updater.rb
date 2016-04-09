@@ -13,7 +13,9 @@ class CompactIndexClient
       response = @fetcher.call(remote_path, headers)
       return if response.is_a?(Net::HTTPNotModified)
       mode = response.is_a?(Net::HTTPPartialContent) ? "a" : "w"
-      local_path.open(mode) {|f| f << response.body }
+      Bundler::SharedHelpers.filesystem_access(local_path) do |path|
+        path.open(mode) {|f| f << response.body }
+      end
 
       return if checksum_for_file(local_path) == response["ETag"]
       local_path.delete
